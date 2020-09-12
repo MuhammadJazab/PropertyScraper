@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30503.244
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PropertyScraper", "PropertyScraper\PropertyScraper.csproj", "{FEFAE98D-D5C0-4BC3-9E59-8A84E0FDBF41}"
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "PropertyScraperPython", "PropertyScraperPython\PropertyScraperPython.pyproj", "{02058A83-E878-44ED-B6B3-E500F614ADB9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FEFAE98D-D5C0-4BC3-9E59-8A84E0FDBF41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEFAE98D-D5C0-4BC3-9E59-8A84E0FDBF41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEFAE98D-D5C0-4BC3-9E59-8A84E0FDBF41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEFAE98D-D5C0-4BC3-9E59-8A84E0FDBF41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02058A83-E878-44ED-B6B3-E500F614ADB9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02058A83-E878-44ED-B6B3-E500F614ADB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {00C3C15E-A0A8-4807-BA1D-21BD77CD8CA2}
+	EndGlobalSection
+EndGlobal
