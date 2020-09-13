@@ -1,0 +1,21 @@
+﻿<Window x:Class="GUIPropertyScraperCSharp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GUIPropertyScraperCSharp"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="300" Width="300">
+    <Grid>
+        <Button Content="Start" HorizontalAlignment="Left" Margin="215,41,0,0" VerticalAlignment="Top" Width="75" Height="23" Click="Button_Click"/>
+        <Label Content="URL / Postal Code" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="10,41,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="200"/>
+        <RichTextBox HorizontalAlignment="Center" Height="205" Margin="0,69,0,0" VerticalAlignment="Top" Width="280">
+            <FlowDocument>
+                <Paragraph>
+                    <Run Text=""/>
+                </Paragraph>
+            </FlowDocument>
+        </RichTextBox>
+    </Grid>
+</Window>
