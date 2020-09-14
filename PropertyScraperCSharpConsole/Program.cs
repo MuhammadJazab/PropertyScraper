@@ -1,13 +1,12 @@
 ﻿using HtmlAgilityPack;
+using OpenHtmlToPdf;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using PropertyScraperCSharpConsole.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Linq;
-using System.Net.Http.Headers;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 
 namespace PropertyScraperCSharpConsole
@@ -15,23 +14,40 @@ namespace PropertyScraperCSharpConsole
     class Program
     {
         static string rightMoveUrl = "https://www.rightmove.co.uk";
+        static string propertyHeatmapUrl = "https://www.propertyheatmap.uk";
+        static string homeCoUKUrl = "https://www.home.co.uk/for_rent/";
+        static string checkMyPostCodeUrl = "https://checkmypostcode.uk/";
+
         static string defaultPostalCode = "NW3", postalCode;
 
         static List<string> propertiesLinks = new List<string>();
         static List<RightMoveModel> rightMoveModels = new List<RightMoveModel>();
+
+        static ChromeDriverService service;
 
         static IWebDriver driver;
         static HtmlWeb htmlWeb;
 
         static void Main(string[] args)
         {
+            service = ChromeDriverService.CreateDefaultService();
+            service.HideCommandPromptWindow = true;
+
             NavigationOutput($"Enter postal code. Leaving it empty will use default {defaultPostalCode} postal code");
             postalCode = Console.ReadLine();
             NavigationOutput("starting data scrapping...");
 
-            ChromeDriverService service = ChromeDriverService.CreateDefaultService();
-            service.HideCommandPromptWindow = true;
+            //ScrapRightMove();
 
+            //ScrapPropertyHeat();
+
+            //ScrapHomeCoUk();
+
+            ScrapCheckMyPostCode();
+        }
+
+        private static void ScrapRightMove()
+        {                      
             driver = new ChromeDriver(service);
             htmlWeb = new HtmlWeb();
 
@@ -62,7 +78,7 @@ namespace PropertyScraperCSharpConsole
 
             #endregion
 
-            var aaaa = propertiesLinks;
+            driver.Quit();
 
             #region CollectDataFromUrls
 
@@ -123,6 +139,70 @@ namespace PropertyScraperCSharpConsole
         private static void NavigationOutput(string _url)
         {
             Console.WriteLine($"{_url}" + Environment.NewLine);
+        }
+
+        private static void ScrapPropertyHeat()
+        {
+            var _postalCode = string.IsNullOrEmpty(postalCode) ? defaultPostalCode : postalCode;
+
+            var html = new HttpClient().GetStringAsync($"{propertyHeatmapUrl}/reports/{_postalCode}");
+            var htmlString = html.GetAwaiter().GetResult();
+
+            var pdf = Pdf.From(htmlString).Content();
+
+            // save file to pdf
+        }
+
+        private static void ScrapHomeCoUk()
+        {
+            driver = new ChromeDriver(service);
+            htmlWeb = new HtmlWeb();
+
+            NavigationOutput($"Navigating to: {homeCoUKUrl}");
+
+            driver.Url = homeCoUKUrl;
+
+            driver.FindElement(By.CssSelector(".homeco_pr_textbox.input--medium.ui-autocomplete-input"))
+                .SendKeys(string.IsNullOrEmpty(postalCode) ? defaultPostalCode : postalCode);
+
+            driver.FindElement(By.ClassName("homeco_pr_button button")).Click();
+
+            NavigationOutput($"Navigating to: {driver.Url}");
+
+            driver.FindElement(By.ClassName("homeco_pr_button button")).Click();
+
+            #region Get property list URLs
+
+            #endregion
+
+            driver.Quit();
+
+            var aa = Console.ReadKey();
+        }
+
+        private static void ScrapCheckMyPostCode()
+        {
+            driver = new ChromeDriver(service);
+            htmlWeb = new HtmlWeb();
+
+            NavigationOutput($"Navigating to: {checkMyPostCodeUrl}");
+
+            driver.Url = checkMyPostCodeUrl;
+
+            driver.FindElement(By.Name("q"))
+                .SendKeys(string.IsNullOrEmpty(postalCode) ? defaultPostalCode : postalCode);
+
+            driver.FindElement(By.CssSelector(".medium-2.columns")).FindElement(By.TagName("input")).Click();
+
+            NavigationOutput($"Navigating to: {driver.Url}");
+
+            //driver.FindElement(By.ClassName("homeco_pr_button button")).Click();
+
+            #region Get property list URLs
+
+            #endregion
+
+            driver.Quit();
         }
     }
 }
