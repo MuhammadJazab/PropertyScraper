@@ -43,11 +43,13 @@ namespace PropertyScraperCSharpConsole
 
             //ScrapHomeCoUk();
 
-            ScrapCheckMyPostCode();
+            //ScrapCheckMyPostCode();
+
+            ScrapQuickSold();
         }
 
         private static void ScrapRightMove()
-        {                      
+        {
             driver = new ChromeDriver(service);
             htmlWeb = new HtmlWeb();
 
@@ -110,16 +112,16 @@ namespace PropertyScraperCSharpConsole
                 .DocumentNode
                 .SelectNodes("//h1[@class='fs-22']")[0]
                 .InnerHtml;
-            
+
             string propertyAddress = htmlDocument
                 .DocumentNode
                 .SelectNodes("//meta[@itemprop='streetAddress']")[0]
-                .GetAttributeValue("content",string.Empty);
+                .GetAttributeValue("content", string.Empty);
 
             string propertyPriceHtml = htmlDocument
                 .DocumentNode
                 .SelectNodes("//p[@id='propertyHeaderPrice']")[0].InnerText;
-            string rawPrice = propertyPriceHtml.Replace("\r","").Replace("\n","").Replace("\t","").Replace(";","").Replace(",","");
+            string rawPrice = propertyPriceHtml.Replace("\r", "").Replace("\n", "").Replace("\t", "").Replace(";", "").Replace(",", "");
             string propertyPrice = Regex.Match(rawPrice, @"(\d+(?:\.\d{1,2})?)").Value;
 
             string propertyMainPicture = htmlDocument
@@ -127,7 +129,7 @@ namespace PropertyScraperCSharpConsole
                 .SelectNodes("//img[@class='js-gallery-main']")[0]
                 .GetAttributeValue("src", string.Empty);
 
-            rightMoveModels.Add(new RightMoveModel() 
+            rightMoveModels.Add(new RightMoveModel()
             {
                 PropertyAddress = propertyAddress,
                 PropertyMainPicture = propertyMainPicture,
@@ -185,24 +187,30 @@ namespace PropertyScraperCSharpConsole
             driver = new ChromeDriver(service);
             htmlWeb = new HtmlWeb();
 
+            NavigationOutput($"Enter postal code. Leaving it empty will use default WA130QX postal code");
+            string checkMypostalCode = Console.ReadLine();
+            NavigationOutput("starting data scrapping...");
+
             NavigationOutput($"Navigating to: {checkMyPostCodeUrl}");
 
-            driver.Url = checkMyPostCodeUrl;
+            var postalCodeCheck = string.IsNullOrWhiteSpace(checkMypostalCode) ? "WA130QX" : checkMypostalCode;
 
-            driver.FindElement(By.Name("q"))
-                .SendKeys(string.IsNullOrEmpty(postalCode) ? defaultPostalCode : postalCode);
-
-            driver.FindElement(By.CssSelector(".medium-2.columns")).FindElement(By.TagName("input")).Click();
+            driver.Url = $"{checkMyPostCodeUrl}{postalCodeCheck}" ;
 
             NavigationOutput($"Navigating to: {driver.Url}");
 
-            //driver.FindElement(By.ClassName("homeco_pr_button button")).Click();
+
 
             #region Get property list URLs
 
             #endregion
 
             driver.Quit();
+        }
+
+        private static void ScrapQuickSold()
+        {
+
         }
     }
 }
