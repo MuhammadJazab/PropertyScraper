@@ -2,6 +2,7 @@
 using OpenHtmlToPdf;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using PropertyScraperCSharpConsole.Classes;
 using PropertyScraperCSharpConsole.Models;
 using System;
 using System.Collections.Generic;
@@ -28,8 +29,12 @@ namespace PropertyScraperCSharpConsole
         static IWebDriver driver;
         static HtmlWeb htmlWeb;
 
+        static PdfHandler pdfHandler;
+
         static void Main(string[] args)
         {
+            pdfHandler = new PdfHandler();
+            
             service = ChromeDriverService.CreateDefaultService();
             service.HideCommandPromptWindow = true;
 
@@ -45,7 +50,7 @@ namespace PropertyScraperCSharpConsole
 
             //ScrapCheckMyPostCode();
 
-            ScrapQuickSold();
+            //ScrapQuickSold();
         }
 
         private static void ScrapRightMove()
@@ -88,13 +93,50 @@ namespace PropertyScraperCSharpConsole
             {
                 NavigationOutput($"Successfully found {propertiesLinks.Count} URLs on: {driver.Url}");
 
-                foreach (var item in propertiesLinks)
+                foreach (var _item in propertiesLinks)
                 {
-                    if (!string.IsNullOrEmpty(item))
+                    if (!string.IsNullOrEmpty(_item))
                     {
-                        FetchRequiredDataFromRightMoveUrl(item);
+                        NavigationOutput($"Fatching data from: {_item}");
+
+                        HtmlDocument htmlDocument = htmlWeb.Load(_item);
+
+                        string propertyType = htmlDocument
+                            .DocumentNode
+                            .SelectNodes("//h1[@class='fs-22']")[0]
+                            .InnerHtml;
+
+                        string propertyAddress = htmlDocument
+                            .DocumentNode
+                            .SelectNodes("//meta[@itemprop='streetAddress']")[0]
+                            .GetAttributeValue("content", string.Empty);
+
+                        string propertyPriceHtml = htmlDocument
+                            .DocumentNode
+                            .SelectNodes("//p[@id='propertyHeaderPrice']")[0].InnerText;
+
+                        string rawPrice = propertyPriceHtml
+                            .Replace("\r", "")
+                            .Replace("\n", "")
+                            .Replace("\t", "")
+                            .Replace(";", "")
+                            .Replace(",", "");
+                        string propertyPrice = Regex.Match(rawPrice, @"(\d+(?:\.\d{1,2})?)").Value;
+
+                        string propertyMainPicture = htmlDocument
+                            .DocumentNode
+                            .SelectNodes("//img[@class='js-gallery-main']")[0]
+                            .GetAttributeValue("src", string.Empty);
+
+                        rightMoveModels.Add(new RightMoveModel()
+                        {
+                            PropertyAddress = propertyAddress,
+                            PropertyMainPicture = propertyMainPicture,
+                            PropertyPrice = propertyPrice,
+                            PropertyType = propertyType
+                        });
                     }
-                    else NavigationOutput($"Invalid Url: {item}");
+                    else NavigationOutput($"Invalid Url: {_item}");
                 }
             }
             else NavigationOutput($"No URLs found on: {driver.Url}");
@@ -102,46 +144,6 @@ namespace PropertyScraperCSharpConsole
             #endregion
         }
 
-        private static void FetchRequiredDataFromRightMoveUrl(string _item)
-        {
-            NavigationOutput($"Fatching data from: {_item}");
-
-            HtmlDocument htmlDocument = htmlWeb.Load(_item);
-
-            string propertyType = htmlDocument
-                .DocumentNode
-                .SelectNodes("//h1[@class='fs-22']")[0]
-                .InnerHtml;
-
-            string propertyAddress = htmlDocument
-                .DocumentNode
-                .SelectNodes("//meta[@itemprop='streetAddress']")[0]
-                .GetAttributeValue("content", string.Empty);
-
-            string propertyPriceHtml = htmlDocument
-                .DocumentNode
-                .SelectNodes("//p[@id='propertyHeaderPrice']")[0].InnerText;
-            string rawPrice = propertyPriceHtml.Replace("\r", "").Replace("\n", "").Replace("\t", "").Replace(";", "").Replace(",", "");
-            string propertyPrice = Regex.Match(rawPrice, @"(\d+(?:\.\d{1,2})?)").Value;
-
-            string propertyMainPicture = htmlDocument
-                .DocumentNode
-                .SelectNodes("//img[@class='js-gallery-main']")[0]
-                .GetAttributeValue("src", string.Empty);
-
-            rightMoveModels.Add(new RightMoveModel()
-            {
-                PropertyAddress = propertyAddress,
-                PropertyMainPicture = propertyMainPicture,
-                PropertyPrice = propertyPrice,
-                PropertyType = propertyType
-            });
-        }
-
-        private static void NavigationOutput(string _url)
-        {
-            Console.WriteLine($"{_url}" + Environment.NewLine);
-        }
 
         private static void ScrapPropertyHeat()
         {
@@ -211,6 +213,11 @@ namespace PropertyScraperCSharpConsole
         private static void ScrapQuickSold()
         {
 
+        }
+
+        private static void NavigationOutput(string _url)
+        {
+            Console.WriteLine($"{_url}" + Environment.NewLine);
         }
     }
 }
