@@ -1,5 +1,4 @@
 ﻿using HtmlAgilityPack;
-using OpenHtmlToPdf;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using PropertyScraperCSharpConsole.Classes;
@@ -152,7 +151,7 @@ namespace PropertyScraperCSharpConsole
             var html = new HttpClient().GetStringAsync($"{propertyHeatmapUrl}/reports/{_postalCode}");
             var htmlString = html.GetAwaiter().GetResult();
 
-            var pdf = Pdf.From(htmlString).Content();
+            //var pdf = Pdf.From(htmlString).Content();
 
             // save file to pdf
         }

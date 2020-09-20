@@ -1,34 +1,48 @@
-﻿using Syncfusion.Drawing;
-using SfPdf = Syncfusion.Pdf;
-using SfGraphics = Syncfusion.Pdf.Graphics;
-using Syncfusion.HtmlConverter;
+﻿using Syncfusion.HtmlConverter;
+using Syncfusion.Pdf;
+using System;
+using System.IO;
 
 namespace PropertyScraperCSharpConsole.Classes
 {
     public class PdfHandler
     {
-        //PdfDocument pdfDocument;
-        //PdfPage pdfPage;
-        //PdfGraphics pdfGraphics;
-        //PdfFont pdfFont;
+        static HtmlToPdfConverter htmlConverter;
+        static WebKitConverterSettings webKitSettings;
 
-        HtmlToPdfConverter htmlConverter;
-        WebKitConverterSettings webKitSettings;
-
-        public PdfHandler()
+        public static bool SavePdf(string url,string fileName)
         {
-            //pdfDocument = new PdfDocument();
-            //pdfPage = pdfDocument.Pages.Add();
-            //pdfGraphics = pdfPage.Graphics;
-            //pdfFont = new PdfStandardFont(PdfFontFamily.Courier, 20);
+            try
+            {
+                htmlConverter = new HtmlToPdfConverter(HtmlRenderingEngine.WebKit);
+                webKitSettings = new WebKitConverterSettings();
 
-            //pdfGraphics.DrawString("Hello World", pdfFont, PdfBrushes.Black, new PointF(0, 0));
+                string path = Path.Combine(Environment.CurrentDirectory, "QtBinariesDotNetCore");
 
+                webKitSettings.WebKitPath = path;
+                webKitSettings.EnableForm = true;
 
-            htmlConverter = new HtmlToPdfConverter(HtmlRenderingEngine.WebKit);
-            webKitSettings = new WebKitConverterSettings();
+                htmlConverter.ConverterSettings = webKitSettings;
 
-            //https://help.syncfusion.com/file-formats/pdf/create-pdf-file-in-c-sharp-vb-net#converting-html-contents-to-pdf
+                PdfDocument document = htmlConverter.Convert(url);
+
+                string savePath = Path.Combine(Environment.CurrentDirectory, $"Archives\\{fileName}.pdf");
+
+                FileStream fileStream = new FileStream(savePath, FileMode.Create);
+
+                document.Save(fileStream);
+
+                document.Close(true);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                Console.WriteLine(ex.Message);
+#endif
+                return false;
+            }
         }
     }
 }
