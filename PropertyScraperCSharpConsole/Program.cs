@@ -6,7 +6,9 @@ using PropertyScraperCSharpConsole.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace PropertyScraperCSharpConsole
@@ -28,12 +30,12 @@ namespace PropertyScraperCSharpConsole
         static IWebDriver driver;
         static HtmlWeb htmlWeb;
 
-        static PdfHandler pdfHandler;
+        static string tempFolder = string.Empty;
 
         static void Main(string[] args)
         {
-            pdfHandler = new PdfHandler();
-            
+            tempFolder = Path.GetTempPath();
+
             service = ChromeDriverService.CreateDefaultService();
             service.HideCommandPromptWindow = true;
 
@@ -41,7 +43,7 @@ namespace PropertyScraperCSharpConsole
             postalCode = Console.ReadLine();
             NavigationOutput("starting data scrapping...");
 
-            //ScrapRightMove();
+            ScrapRightMove();
 
             //ScrapPropertyHeat();
 
@@ -82,15 +84,10 @@ namespace PropertyScraperCSharpConsole
                 NavigationOutput($"URL found: {item.GetAttribute("href")}");
             }
 
-            #endregion
-
-            driver.Quit();
-
-            #region CollectDataFromUrls
-
             if (propertiesLinks.Count > 0)
             {
                 NavigationOutput($"Successfully found {propertiesLinks.Count} URLs on: {driver.Url}");
+                driver.Quit();
 
                 foreach (var _item in propertiesLinks)
                 {
@@ -127,13 +124,18 @@ namespace PropertyScraperCSharpConsole
                             .SelectNodes("//img[@class='js-gallery-main']")[0]
                             .GetAttributeValue("src", string.Empty);
 
-                        rightMoveModels.Add(new RightMoveModel()
+                        RightMoveModel rightMoveModel = new RightMoveModel()
                         {
                             PropertyAddress = propertyAddress,
                             PropertyMainPicture = propertyMainPicture,
                             PropertyPrice = propertyPrice,
-                            PropertyType = propertyType
-                        });
+                            PropertyType = propertyType,
+                            PropertyUrl = _item
+                        };
+
+                        //rightMoveModels.Add(rightMoveModel);
+
+                        PdfHandler.SavePdf(rightMoveModel);
                     }
                     else NavigationOutput($"Invalid Url: {_item}");
                 }
@@ -148,10 +150,12 @@ namespace PropertyScraperCSharpConsole
         {
             var _postalCode = string.IsNullOrEmpty(postalCode) ? defaultPostalCode : postalCode;
 
-            var html = new HttpClient().GetStringAsync($"{propertyHeatmapUrl}/reports/{_postalCode}");
+            string url = $"{propertyHeatmapUrl}/reports/{_postalCode}";
+
+            var html = new HttpClient().GetStringAsync(url);
             var htmlString = html.GetAwaiter().GetResult();
 
-            //var pdf = Pdf.From(htmlString).Content();
+            PdfHandler.SavePdf(htmlString, tempFolder, $"PropertyHeatMap {_postalCode}");
 
             // save file to pdf
         }
@@ -196,7 +200,7 @@ namespace PropertyScraperCSharpConsole
 
             var postalCodeCheck = string.IsNullOrWhiteSpace(checkMypostalCode) ? "WA130QX" : checkMypostalCode;
 
-            driver.Url = $"{checkMyPostCodeUrl}{postalCodeCheck}" ;
+            driver.Url = $"{checkMyPostCodeUrl}{postalCodeCheck}";
 
             NavigationOutput($"Navigating to: {driver.Url}");
 
