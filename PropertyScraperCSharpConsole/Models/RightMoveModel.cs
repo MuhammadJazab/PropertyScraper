@@ -11,5 +11,8 @@ namespace PropertyScraperCSharpConsole.Models
         public string PropertyPrice { get; set; }
         public string PropertyMainPicture { get; set; }
         public string PropertyUrl { get; set; }
+        public string postalCode{ get; set; }
+        public string PropertyHeatHtmlString { get; set; }
+        public string HomeCoUKHtmlString { get; set; }
     }
 }
