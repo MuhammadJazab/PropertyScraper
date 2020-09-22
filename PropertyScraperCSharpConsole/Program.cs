@@ -48,7 +48,7 @@ namespace PropertyScraperCSharpConsole
 
             //ScrapCheckMyPostCode();
 
-            //ScrapQuickSold();
+            ScrapQuickSold();
         }
 
         private static void ScrapRightMove()
@@ -213,7 +213,7 @@ namespace PropertyScraperCSharpConsole
 
             NavigationOutput($"Navigating to: {driver.Url}");
 
-            driver.FindElement(By.XPath("//p[]"))
+            var aa = driver.FindElement(By.XPath("//div//div//p")).Text;
 
             driver.Quit();
         }
@@ -227,5 +227,7 @@ namespace PropertyScraperCSharpConsole
         {
             Console.WriteLine($"{_url}" + Environment.NewLine);
         }
+
+        //div//p[@class='g'
     }
 }
