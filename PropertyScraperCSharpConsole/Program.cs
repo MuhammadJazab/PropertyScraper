@@ -172,7 +172,7 @@ namespace PropertyScraperCSharpConsole
                             HomeCoUKHtmlString = innerHtml
                         };
 
-                        PdfHandler.SavePdf(rightMoveModel);
+                        PdfHandler.SaveRightMovePdf(rightMoveModel);
                     }
                     else NavigationOutput($"Invalid Url: {_item}");
                 }
@@ -253,9 +253,9 @@ namespace PropertyScraperCSharpConsole
 
                     HtmlDocument areaPostalCodeDocument = new HtmlWeb().Load(postalCodeUrl);
 
-                    string checkMyPostData = areaPostalCodeDocument.DocumentNode.SelectNodes("//span")[1].InnerHtml;
+                    string checkMyPostHtml = areaPostalCodeDocument.DocumentNode.SelectNodes("//span")[1].InnerHtml;
 
-                    // save whole data in single PDF file named check my post code 
+                    PdfHandler.SavePDF(checkMyPostHtml, "CheckMyPostCode");
                 }
             }            
         }
@@ -285,9 +285,11 @@ namespace PropertyScraperCSharpConsole
 
                         HtmlDocument areaInformationPageDocument = new HtmlWeb().Load(postalCodeDistricsLink);
 
-                        string areaInformationPage = areaInformationPageDocument
+                        string areaInformationHtml = areaInformationPageDocument
                             .DocumentNode
                             .SelectNodes("//div[@class='row']")[0].InnerHtml;
+
+                        PdfHandler.SavePDF(areaInformationHtml, "QuickSold");
                     }
                 }
             }

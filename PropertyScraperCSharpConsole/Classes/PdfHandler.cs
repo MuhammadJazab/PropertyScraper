@@ -19,7 +19,7 @@ namespace PropertyScraperCSharpConsole.Classes
         static HtmlToPdfConverter htmlConverter;
         static WebKitConverterSettings webKitSettings;
 
-        public static string SavePdf(RightMoveModel rightMoveModel)
+        public static string SaveRightMovePdf(RightMoveModel rightMoveModel)
         {
             try
             {
@@ -86,6 +86,76 @@ namespace PropertyScraperCSharpConsole.Classes
 
                         loadedDocument.ImportPage(tempLoadeDocument, 2);
                     }
+
+                    string savePath = Path.Combine(archiveFolder, $"{fileName}.pdf");
+
+                    loadedDocument.Save(new FileStream(savePath, FileMode.Create));
+
+                    loadedDocument.Close(true);
+
+                    return $"file successfully saved at: {savePath}";
+                }
+                else
+                {
+                    Console.WriteLine("Invalid PDF file");
+                    return $"Invalid PDF file";
+                }
+            }
+            catch (Exception ex)
+            {
+#if DEBUG
+                Console.WriteLine(ex.Message);
+#endif
+                return $"Unable to save the file";
+            }
+        }
+
+        public static string SavePDF(string htmlString, string fileName)
+        {
+            try
+            {
+                string archiveFolder = Path.Combine(Environment.CurrentDirectory, "Archives");
+                string qtBinariespath = Path.Combine(Environment.CurrentDirectory, "QtBinariesDotNetCore");
+                string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Resources\\pdftemplate.pdf");
+                string tempFolder = Path.GetTempPath();
+
+                htmlConverter = new HtmlToPdfConverter(HtmlRenderingEngine.WebKit);
+                webKitSettings = new WebKitConverterSettings();
+
+                webKitSettings.WebKitPath = qtBinariespath;
+                webKitSettings.EnableForm = true;
+
+                htmlConverter.ConverterSettings = webKitSettings;
+
+                PdfLoadedDocument loadedDocument;
+
+                if (File.Exists(Path.Combine(archiveFolder, $"{fileName}.pdf")))
+                    loadedDocument = new PdfLoadedDocument(new FileStream(Path.Combine(archiveFolder, $"{fileName}.pdf"), FileMode.Open));
+                else loadedDocument = new PdfLoadedDocument(new FileStream(templatePath, FileMode.Open));
+
+                if (!Directory.Exists(archiveFolder))
+                {
+                    Directory.CreateDirectory(archiveFolder);
+                }
+
+                if (loadedDocument.PageCount > 0)
+                {
+                    PdfLoadedPage pdfLoadedPage = loadedDocument.Pages[loadedDocument.PageCount - 1] as PdfLoadedPage;
+
+                    PdfTemplate pdfTemplate = new PdfTemplate(900, 600);
+
+                    PdfFont pdfFont = new PdfStandardFont(PdfFontFamily.Helvetica, 15);
+
+                    PdfBrush brush = new PdfSolidBrush(SfDrawing.Color.Black);
+
+                    PdfDocument document = htmlConverter.Convert(htmlString, tempFolder);
+
+                    document.Save(new FileStream(Path.Combine(tempFolder, $"temp{fileName}.pdf"), FileMode.Create));
+                    document.Close(true);
+
+                    PdfLoadedDocument tempLoadeDocument = new PdfLoadedDocument(new FileStream(Path.Combine(tempFolder, $"temp{fileName}.pdf"), FileMode.Open));
+
+                    loadedDocument.ImportPage(tempLoadeDocument, 2);
 
                     string savePath = Path.Combine(archiveFolder, $"{fileName}.pdf");
 
