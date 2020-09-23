@@ -7,8 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Net.Http;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace PropertyScraperCSharpConsole
@@ -32,6 +30,8 @@ namespace PropertyScraperCSharpConsole
 
         static string tempFolder = string.Empty;
 
+        static string run;
+
         static void Main(string[] args)
         {
             tempFolder = Path.GetTempPath();
@@ -39,19 +39,52 @@ namespace PropertyScraperCSharpConsole
             service = ChromeDriverService.CreateDefaultService();
             service.HideCommandPromptWindow = true;
 
-            NavigationOutput($"Enter postal code. Leaving it empty will use default {defaultPostalCode} postal code");
-            postalCode = Console.ReadLine();
-            NavigationOutput("starting data scrapping...");
+            do
+            {
+                Console.Clear();
 
-            //ScrapQuickSold();
+                NavigationOutput($"Press 1 for RightMove");
+                NavigationOutput($"Press 2 for CheckMyPostCode");
+                NavigationOutput($"Press 3 for QuickSold");
+                NavigationOutput($"Press y to Continue");
+                NavigationOutput($"Press e to exit");
 
-            //ScrapRightMove();
+                run = Console.ReadLine().ToLower();
 
-            //ScrapHomeCoUk();
+                switch (run)
+                {
+                    case "1":
+                        NavigationOutput($"Enter postal code. Leaving it empty will use default {defaultPostalCode} postal code");
+                        postalCode = Console.ReadLine();
+                        NavigationOutput("starting data scrapping...");
 
-            //ScrapCheckMyPostCode();
+                        ScrapRightMove();
+                        break;
 
-            //ScrapQuickSold();
+                    case "2":
+                        ScrapCheckMyPostCode();
+                        break;
+
+                    case "3":
+                        ScrapQuickSold();
+                        break;
+
+                    case "y":
+                        run = "y";
+                        break;
+
+                    case "e":
+                        Environment.Exit(1);
+                        break;
+
+                    default:
+                        NavigationOutput($"Invalid input {run}. try again or press e to exit");
+                        break;
+                }
+
+                NavigationOutput($"Press e to exit");
+
+            } while (run == "y");
         }
 
         private static void ScrapRightMove()
