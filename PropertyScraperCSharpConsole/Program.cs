@@ -93,97 +93,105 @@ namespace PropertyScraperCSharpConsole
 
         private static void ScrapRightMove()
         {
-            driver = new ChromeDriver(service);
-            htmlWeb = new HtmlWeb();
-
-            NavigationOutput($"Navigating to: {rightMoveUrl}");
-
-            driver.Url = rightMoveUrl;
-
-            driver.FindElement(By.Name("searchLocation"))
-                .SendKeys(string.IsNullOrEmpty(postalCode) ? defaultPostalCode : postalCode);
-            driver.FindElement(By.Id("buy")).Click();
-
-            NavigationOutput($"Navigating to: {driver.Url}");
-
-            driver.FindElement(By.Id("submit")).Click();
-
-            #region Get property list URLs
-
-            ReadOnlyCollection<IWebElement> readOnlyCollection = driver
-                .FindElements(By.CssSelector(".propertyCard-moreInfoItem.is-carousel"));
-
-            NavigationOutput($"Finding URLs on: {driver.Url}");
-
-            foreach (var item in readOnlyCollection)
+            try
             {
-                propertiesLinks.Add(item.GetAttribute("href"));
-                NavigationOutput($"URL found: {item.GetAttribute("href")}");
-            }
+                driver = new ChromeDriver(service);
+                htmlWeb = new HtmlWeb();
 
-            if (propertiesLinks.Count > 0)
-            {
-                NavigationOutput($"Successfully found {propertiesLinks.Count} URLs on: {driver.Url}");
-                driver.Quit();
+                NavigationOutput($"Navigating to: {rightMoveUrl}");
 
-                foreach (var _item in propertiesLinks)
+                driver.Url = rightMoveUrl;
+
+                driver.FindElement(By.Name("searchLocation"))
+                    .SendKeys(string.IsNullOrEmpty(postalCode) ? defaultPostalCode : postalCode);
+                driver.FindElement(By.Id("buy")).Click();
+
+                NavigationOutput($"Navigating to: {driver.Url}");
+
+                driver.FindElement(By.Id("submit")).Click();
+
+                #region Get property list URLs
+
+                ReadOnlyCollection<IWebElement> readOnlyCollection = driver
+                    .FindElements(By.CssSelector(".propertyCard-moreInfoItem.is-carousel"));
+
+                NavigationOutput($"Finding URLs on: {driver.Url}");
+
+                foreach (var item in readOnlyCollection)
                 {
-                    if (!string.IsNullOrEmpty(_item))
-                    {
-                        NavigationOutput($"Fatching data from: {_item}");
-
-                        HtmlDocument htmlDocument = htmlWeb.Load(_item);
-
-                        string propertyType = htmlDocument
-                            .DocumentNode
-                            .SelectNodes("//h1[@class='fs-22']")[0]
-                            .InnerHtml;
-
-                        string propertyAddress = htmlDocument
-                            .DocumentNode
-                            .SelectNodes("//meta[@itemprop='streetAddress']")[0]
-                            .GetAttributeValue("content", string.Empty);
-
-                        string propertyPriceHtml = htmlDocument
-                            .DocumentNode
-                            .SelectNodes("//p[@id='propertyHeaderPrice']")[0].InnerText;
-
-                        string rawPrice = propertyPriceHtml
-                            .Replace("\r", "")
-                            .Replace("\n", "")
-                            .Replace("\t", "")
-                            .Replace(";", "")
-                            .Replace(",", "");
-                        string propertyPrice = Regex.Match(rawPrice, @"(\d+(?:\.\d{1,2})?)").Value;
-
-                        string propertyMainPicture = htmlDocument
-                            .DocumentNode
-                            .SelectNodes("//img[@class='js-gallery-main']")[0]
-                            .GetAttributeValue("src", string.Empty);
-
-                        string propertyHeatHtmlString = ScrapPropertyHeat();
-                        string innerHtml = ScrapHomeCoUk();
-
-                        RightMoveModel rightMoveModel = new RightMoveModel()
-                        {
-                            PropertyAddress = propertyAddress,
-                            PropertyMainPicture = propertyMainPicture,
-                            PropertyPrice = propertyPrice,
-                            PropertyType = propertyType,
-                            PropertyUrl = _item,
-                            PropertyHeatHtmlString = propertyHeatHtmlString,
-                            postalCode = string.IsNullOrEmpty(postalCode) ? defaultPostalCode : postalCode,
-                            HomeCoUKHtmlString = innerHtml
-                        };
-
-                        pdfHandler.SaveRightMovePdf(rightMoveModel);
-                    }
-                    else NavigationOutput($"Invalid Url: {_item}");
+                    propertiesLinks.Add(item.GetAttribute("href"));
+                    NavigationOutput($"URL found: {item.GetAttribute("href")}");
                 }
-            }
-            else NavigationOutput($"No URLs found on: {driver.Url}");
 
-            #endregion
+                if (propertiesLinks.Count > 0)
+                {
+                    NavigationOutput($"Successfully found {propertiesLinks.Count} URLs on: {driver.Url}");
+                    driver.Quit();
+
+                    foreach (var _item in propertiesLinks)
+                    {
+                        if (!string.IsNullOrEmpty(_item))
+                        {
+                            NavigationOutput($"Fatching data from: {_item}");
+
+                            HtmlDocument htmlDocument = htmlWeb.Load(_item);
+
+                            string propertyType = htmlDocument
+                                .DocumentNode
+                                .SelectNodes("//h1[@class='fs-22']")[0]
+                                .InnerHtml;
+
+                            string propertyAddress = htmlDocument
+                                .DocumentNode
+                                .SelectNodes("//meta[@itemprop='streetAddress']")[0]
+                                .GetAttributeValue("content", string.Empty);
+
+                            string propertyPriceHtml = htmlDocument
+                                .DocumentNode
+                                .SelectNodes("//p[@id='propertyHeaderPrice']")[0].InnerText;
+
+                            string rawPrice = propertyPriceHtml
+                                .Replace("\r", "")
+                                .Replace("\n", "")
+                                .Replace("\t", "")
+                                .Replace(";", "")
+                                .Replace(",", "");
+                            string propertyPrice = Regex.Match(rawPrice, @"(\d+(?:\.\d{1,2})?)").Value;
+
+                            string propertyMainPicture = htmlDocument
+                                .DocumentNode
+                                .SelectNodes("//img[@class='js-gallery-main']")[0]
+                                .GetAttributeValue("src", string.Empty);
+
+                            string propertyHeatHtmlString = ScrapPropertyHeat();
+                            string innerHtml = ScrapHomeCoUk();
+
+                            RightMoveModel rightMoveModel = new RightMoveModel()
+                            {
+                                PropertyAddress = propertyAddress,
+                                PropertyMainPicture = propertyMainPicture,
+                                PropertyPrice = propertyPrice,
+                                PropertyType = propertyType,
+                                PropertyUrl = _item,
+                                PropertyHeatHtmlString = propertyHeatHtmlString,
+                                postalCode = string.IsNullOrEmpty(postalCode) ? defaultPostalCode : postalCode,
+                                HomeCoUKHtmlString = innerHtml
+                            };
+
+                            pdfHandler.SaveRightMovePdf(rightMoveModel);
+                        }
+                        else NavigationOutput($"Invalid Url: {_item}");
+                    }
+                }
+                else NavigationOutput($"No URLs found on: {driver.Url}");
+
+                #endregion
+            }
+            catch (Exception ex)
+            {
+                NavigationOutput(ex.Message);
+                return;
+            }
         }
 
         private static string ScrapPropertyHeat()

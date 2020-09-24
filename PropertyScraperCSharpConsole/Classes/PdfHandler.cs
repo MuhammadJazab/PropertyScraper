@@ -66,8 +66,7 @@ namespace PropertyScraperCSharpConsole.Classes
                     pdfTemplate.Graphics.DrawString($"Property Address: {rightMoveModel.PropertyAddress}", pdfFont, brush, 100, 30);
                     pdfTemplate.Graphics.DrawString($"Property Type: {rightMoveModel.PropertyType}", pdfFont, brush, 100, 50);
                     pdfTemplate.Graphics.DrawString($"PropertyPrice: {rightMoveModel.PropertyPrice} ", pdfFont, brush, 100, 70);
-                    pdfTemplate.Graphics.DrawImage
-                        (PdfImage.FromStream(imageStream), new SfDrawing.PointF(100, 100), new SfDrawing.SizeF(400, 400));
+                    pdfTemplate.Graphics.DrawImage(PdfImage.FromStream(imageStream), new SfDrawing.PointF(100, 100), new SfDrawing.SizeF(400, 400));
 
                     pdfLoadedPage.Graphics.DrawPdfTemplate(pdfTemplate, SfDrawing.PointF.Empty);
 
@@ -81,24 +80,62 @@ namespace PropertyScraperCSharpConsole.Classes
 
                     string fileName = Regex.Match(rawName, @"(\d+(?:\.\d{1,2})?)").Value;
 
-                    if (!string.IsNullOrEmpty(rightMoveModel.PropertyHeatHtmlString))
+                    PdfDocument propertyHeatMapPdfDocument = htmlConverter.Convert(rightMoveModel.PropertyHeatHtmlString, string.Empty);
+                    PdfDocument homeCoUKHtmlPdfDocument = htmlConverter.Convert(rightMoveModel.HomeCoUKHtmlString, string.Empty);
+
+                    string tempPropertyHeatMap = Path.Combine(tempFolder, $"propertyHeatMap{fileName}.pdf");
+
+                    using (FileStream propertyHeatMapStream = new FileStream(tempPropertyHeatMap, FileMode.Create))
                     {
-                        PdfDocument document = htmlConverter
-                            .Convert(rightMoveModel.PropertyHeatHtmlString, tempFolder);
+                        propertyHeatMapPdfDocument.Save(propertyHeatMapStream);
+                        propertyHeatMapPdfDocument.Close(true);
+                        propertyHeatMapPdfDocument.Dispose();
 
-                        document.Save(new FileStream(Path.Combine(tempFolder, $"temp{fileName}.pdf"), FileMode.Create));
-                        document.Close(true);
+                        propertyHeatMapStream.Close();
+                        propertyHeatMapStream.Dispose();
+                    }
 
-                        PdfLoadedDocument tempLoadeDocument = new PdfLoadedDocument(new FileStream(Path.Combine(tempFolder, $"temp{fileName}.pdf"), FileMode.Open));
+                    string tempHomeCoUK = Path.Combine(tempFolder, $"homeCoUK{fileName}.pdf");
 
-                        loadedDocument.ImportPage(tempLoadeDocument, 2);
+                    using (FileStream homeCoUKHtmlPdfStream = new FileStream(tempHomeCoUK, FileMode.Create))
+                    {
+                        homeCoUKHtmlPdfDocument.Save(homeCoUKHtmlPdfStream);
+                        homeCoUKHtmlPdfDocument.Close(true);
+                        homeCoUKHtmlPdfDocument.Dispose();
+
+                        homeCoUKHtmlPdfStream.Close();
+                        homeCoUKHtmlPdfStream.Dispose();
+                    }
+
+                    using (FileStream propertyHeatMapReadStream = new FileStream(tempPropertyHeatMap, FileMode.Open))
+                    {
+                        PdfLoadedDocument tempPropertyHeatMapDocument = new PdfLoadedDocument(propertyHeatMapReadStream);
+                        loadedDocument.ImportPage(tempPropertyHeatMapDocument, 0);
+
+                        propertyHeatMapReadStream.Close();
+                        propertyHeatMapReadStream.Dispose();
+                    }
+
+                    using (FileStream homeCoUKReadStream = new FileStream(tempHomeCoUK, FileMode.Open))
+                    {
+                        PdfLoadedDocument tempHomeCoUKDocument = new PdfLoadedDocument(homeCoUKReadStream);
+
+                        loadedDocument.ImportPage(tempHomeCoUKDocument, 0);
+
+                        homeCoUKReadStream.Close();
+                        homeCoUKReadStream.Dispose();
                     }
 
                     string savePath = Path.Combine(archiveFolder, $"{fileName}.pdf");
 
-                    loadedDocument.Save(new FileStream(savePath, FileMode.Create));
-
-                    loadedDocument.Close(true);
+                    using (FileStream saveStream = new FileStream(savePath, FileMode.Create))
+                    {
+                        loadedDocument.Save(saveStream);
+                        loadedDocument.Close(true);
+                        loadedDocument.Dispose();
+                        saveStream.Close();
+                        saveStream.Dispose();
+                    }
 
                     return $"file successfully saved at: {savePath}";
                 }
@@ -110,9 +147,8 @@ namespace PropertyScraperCSharpConsole.Classes
             }
             catch (Exception ex)
             {
-#if DEBUG
-                Console.WriteLine(ex.Message);
-#endif
+                Console.WriteLine($"Unable to save the file. {ex.Message}");
+
                 return $"Unable to save the file";
             }
         }
@@ -150,7 +186,7 @@ namespace PropertyScraperCSharpConsole.Classes
 
                 //PdfBrush brush = new PdfSolidBrush(SfDrawing.Color.Black);
 
-               // pdfLoadedPage.Graphics.DrawPdfTemplate(pdfTemplate, SfDrawing.PointF.Empty);
+                // pdfLoadedPage.Graphics.DrawPdfTemplate(pdfTemplate, SfDrawing.PointF.Empty);
 
                 PdfDocument document = htmlConverter.Convert(htmlString, tempFolder);
 
