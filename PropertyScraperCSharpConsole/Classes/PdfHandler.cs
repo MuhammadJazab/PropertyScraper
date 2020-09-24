@@ -119,85 +119,81 @@ namespace PropertyScraperCSharpConsole.Classes
 
         public string SavePDF(string htmlString, string fileName)
         {
+            FileStream fs = null;
+
             try
             {
-                PdfLoadedDocument loadedDocument;
 
-                if (File.Exists(Path.Combine(archiveFolder, $"{fileName}.pdf")))
-                {
-                    using (FileStream fs = new FileStream(Path.Combine(archiveFolder, $"{fileName}.pdf"), FileMode.Open))
-                    {
-                        loadedDocument = new PdfLoadedDocument(fs);
-                        fs.Close();
-                        fs.Dispose();
-                    }
-                }
-                else
-                {
-                    using (FileStream fs = new FileStream(templatePath, FileMode.Open))
-                    {
-                        loadedDocument = new PdfLoadedDocument(fs);
-                        fs.Close();
-                        fs.Dispose();
-                    }
+                //PdfLoadedDocument loadedDocument;
 
-                }
+                //if (File.Exists(Path.Combine(archiveFolder, $"{fileName}.pdf")))
+                //{
+                //    loadedDocument = new PdfLoadedDocument(new FileStream(Path.Combine(archiveFolder, $"{fileName}.pdf"), FileMode.Open));
+                //}
+                //else
+                //{
+                //    loadedDocument = new PdfLoadedDocument(new FileStream(templatePath, FileMode.Open));
+                //}
 
-                if (!Directory.Exists(archiveFolder))
-                {
-                    Directory.CreateDirectory(archiveFolder);
-                }
+                //if (!Directory.Exists(archiveFolder))
+                //{
+                //    Directory.CreateDirectory(archiveFolder);
+                //}
 
-                if (loadedDocument.PageCount > 0)
-                {
-                    PdfLoadedPage pdfLoadedPage = loadedDocument.Pages[1] as PdfLoadedPage;
+                //if (loadedDocument.PageCount > 0)
+                //{
+                //PdfLoadedPage pdfLoadedPage = loadedDocument.Pages[1] as PdfLoadedPage;
 
-                    PdfTemplate pdfTemplate = new PdfTemplate(900, 600);
+                //PdfTemplate pdfTemplate = new PdfTemplate(900, 600);
 
-                    PdfFont pdfFont = new PdfStandardFont(PdfFontFamily.Helvetica, 15);
+                //PdfFont pdfFont = new PdfStandardFont(PdfFontFamily.Helvetica, 15);
 
-                    PdfBrush brush = new PdfSolidBrush(SfDrawing.Color.Black);
+                //PdfBrush brush = new PdfSolidBrush(SfDrawing.Color.Black);
 
-                    pdfLoadedPage.Graphics.DrawPdfTemplate(pdfTemplate, SfDrawing.PointF.Empty);
+               // pdfLoadedPage.Graphics.DrawPdfTemplate(pdfTemplate, SfDrawing.PointF.Empty);
 
-                    PdfDocument document = htmlConverter.Convert(htmlString, tempFolder);
+                PdfDocument document = htmlConverter.Convert(htmlString, tempFolder);
 
-                    using (FileStream fs = new FileStream(Path.Combine(tempFolder, $"{fileName}.pdf"), FileMode.Create))
-                    {
-                        document.Save(fs);
-                        document.Close(true);
-                        fs.Close();
-                        fs.Dispose();
-                    }
+                //fs = new FileStream(Path.Combine(tempFolder, $"{fileName}.pdf"), FileMode.Create);
+                //document.Save(fs);
+                //document.Close(true);
+                //fs.Close();
+                //fs.Dispose();
 
-                    string savePath = string.Empty;
+                string savePath = string.Empty;
+                savePath = Path.Combine(archiveFolder, $"{fileName}.pdf");
 
-                    using (FileStream fs = new FileStream(Path.Combine(tempFolder, $"{fileName}.pdf"), FileMode.Open))
-                    {
-                        savePath = Path.Combine(archiveFolder, $"{fileName}.pdf");
+                fs = new FileStream(savePath, FileMode.CreateNew);
 
-                        PdfLoadedDocument tempLoadeDocument = new PdfLoadedDocument(fs);
+                document.Save(fs);
+                document.Close(true);
+                fs.Close();
+                fs.Dispose();
 
-                        loadedDocument.ImportPage(tempLoadeDocument, loadedDocument.PageCount - 1);
-                        loadedDocument.Save(new FileStream(savePath, FileMode.Create));
-                        loadedDocument.Close(true);
+                //PdfLoadedDocument tempLoadeDocument = new PdfLoadedDocument(fs);
 
-                        fs.Close();
-                        fs.Dispose();
+                //loadedDocument.ImportPage(tempLoadeDocument, loadedDocument.PageCount - 1);
+                //loadedDocument.Save(new FileStream(savePath, FileMode.Create));
+                //loadedDocument.Close(true);
 
-                    }
+                //fs.Close();
+                //fs.Dispose();
 
-                    return $"file successfully saved at: {savePath}";
-                }
-                else
-                {
-                    Console.WriteLine("Invalid PDF file");
-                    return $"Invalid PDF file";
-                }
+                return $"file successfully saved at: {savePath}";
+                //}
+                //else
+                //{
+                //    Console.WriteLine("Invalid PDF file");
+                //    return $"Invalid PDF file";
+                //}
             }
             catch (Exception ex)
             {
+                //fs.Close();
+                //fs.Dispose();
+
                 Console.WriteLine($"Unable to save the file. {ex.Message}");
+
                 return $"Unable to save the file";
             }
         }

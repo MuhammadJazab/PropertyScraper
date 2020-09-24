@@ -274,7 +274,7 @@ namespace PropertyScraperCSharpConsole
 
                         string checkMyPostHtml = postCodePageDocument.DocumentNode.SelectNodes("//span")[1].InnerHtml;
 
-                        pdfHandler.SavePDF(checkMyPostHtml, $"CheckMyPostCode {rawPostCodesInCity.Value.Replace("/", "")}");
+                        Console.WriteLine(pdfHandler.SavePDF(checkMyPostHtml, $"CheckMyPostCode {rawPostCodesInCity.Value.Replace("/", "")}"));
                     }
                 }
             }
