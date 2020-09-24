@@ -11,6 +11,8 @@ using Syncfusion.Pdf.Graphics;
 using Syncfusion.Drawing;
 using System.Drawing;
 using System.Net;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace PropertyScraperCSharpConsole.Classes
 {
@@ -19,24 +21,29 @@ namespace PropertyScraperCSharpConsole.Classes
         static HtmlToPdfConverter htmlConverter;
         static WebKitConverterSettings webKitSettings;
 
-        public static string SaveRightMovePdf(RightMoveModel rightMoveModel)
+        string archiveFolder, qtBinariespath, templatePath, tempFolder;
+
+        public PdfHandler()
+        {
+            archiveFolder = Path.Combine(Environment.CurrentDirectory, "Archives");
+            qtBinariespath = Path.Combine(Environment.CurrentDirectory, "QtBinariesDotNetCore");
+            templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Resources\\pdftemplate.pdf");
+            tempFolder = Path.GetTempPath();
+
+            htmlConverter = new HtmlToPdfConverter(HtmlRenderingEngine.WebKit);
+            webKitSettings = new WebKitConverterSettings();
+
+            webKitSettings.WebKitPath = qtBinariespath;
+            webKitSettings.EnableForm = true;
+
+            htmlConverter.ConverterSettings = webKitSettings;
+        }
+
+        public string SaveRightMovePdf(RightMoveModel rightMoveModel)
         {
             try
             {
-                string archiveFolder = Path.Combine(Environment.CurrentDirectory, "Archives");
-                string qtBinariespath = Path.Combine(Environment.CurrentDirectory, "QtBinariesDotNetCore");
-                string path = Path.Combine(Directory.GetCurrentDirectory(), "Resources\\pdftemplate.pdf");
-                string tempFolder = Path.GetTempPath();
-
-                PdfLoadedDocument loadedDocument = new PdfLoadedDocument(new FileStream(path, FileMode.Open));
-
-                htmlConverter = new HtmlToPdfConverter(HtmlRenderingEngine.WebKit);
-                webKitSettings = new WebKitConverterSettings();
-
-                webKitSettings.WebKitPath = qtBinariespath;
-                webKitSettings.EnableForm = true;
-
-                htmlConverter.ConverterSettings = webKitSettings;
+                PdfLoadedDocument loadedDocument = new PdfLoadedDocument(new FileStream(templatePath, FileMode.Open));
 
                 if (!Directory.Exists(archiveFolder))
                 {
@@ -110,28 +117,31 @@ namespace PropertyScraperCSharpConsole.Classes
             }
         }
 
-        public static string SavePDF(string htmlString, string fileName)
+        public string SavePDF(string htmlString, string fileName)
         {
             try
             {
-                string archiveFolder = Path.Combine(Environment.CurrentDirectory, "Archives");
-                string qtBinariespath = Path.Combine(Environment.CurrentDirectory, "QtBinariesDotNetCore");
-                string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Resources\\pdftemplate.pdf");
-                string tempFolder = Path.GetTempPath();
-
-                htmlConverter = new HtmlToPdfConverter(HtmlRenderingEngine.WebKit);
-                webKitSettings = new WebKitConverterSettings();
-
-                webKitSettings.WebKitPath = qtBinariespath;
-                webKitSettings.EnableForm = true;
-
-                htmlConverter.ConverterSettings = webKitSettings;
-
                 PdfLoadedDocument loadedDocument;
 
                 if (File.Exists(Path.Combine(archiveFolder, $"{fileName}.pdf")))
-                    loadedDocument = new PdfLoadedDocument(new FileStream(Path.Combine(archiveFolder, $"{fileName}.pdf"), FileMode.Open));
-                else loadedDocument = new PdfLoadedDocument(new FileStream(templatePath, FileMode.Open));
+                {
+                    using (FileStream fs = new FileStream(Path.Combine(archiveFolder, $"{fileName}.pdf"), FileMode.Open))
+                    {
+                        loadedDocument = new PdfLoadedDocument(fs);
+                        fs.Close();
+                        fs.Dispose();
+                    }
+                }
+                else
+                {
+                    using (FileStream fs = new FileStream(templatePath, FileMode.Open))
+                    {
+                        loadedDocument = new PdfLoadedDocument(fs);
+                        fs.Close();
+                        fs.Dispose();
+                    }
+
+                }
 
                 if (!Directory.Exists(archiveFolder))
                 {
@@ -140,7 +150,7 @@ namespace PropertyScraperCSharpConsole.Classes
 
                 if (loadedDocument.PageCount > 0)
                 {
-                    PdfLoadedPage pdfLoadedPage = loadedDocument.Pages[loadedDocument.PageCount - 1] as PdfLoadedPage;
+                    PdfLoadedPage pdfLoadedPage = loadedDocument.Pages[1] as PdfLoadedPage;
 
                     PdfTemplate pdfTemplate = new PdfTemplate(900, 600);
 
@@ -148,20 +158,34 @@ namespace PropertyScraperCSharpConsole.Classes
 
                     PdfBrush brush = new PdfSolidBrush(SfDrawing.Color.Black);
 
+                    pdfLoadedPage.Graphics.DrawPdfTemplate(pdfTemplate, SfDrawing.PointF.Empty);
+
                     PdfDocument document = htmlConverter.Convert(htmlString, tempFolder);
 
-                    document.Save(new FileStream(Path.Combine(tempFolder, $"temp{fileName}.pdf"), FileMode.Create));
-                    document.Close(true);
+                    using (FileStream fs = new FileStream(Path.Combine(tempFolder, $"{fileName}.pdf"), FileMode.Create))
+                    {
+                        document.Save(fs);
+                        document.Close(true);
+                        fs.Close();
+                        fs.Dispose();
+                    }
 
-                    PdfLoadedDocument tempLoadeDocument = new PdfLoadedDocument(new FileStream(Path.Combine(tempFolder, $"temp{fileName}.pdf"), FileMode.Open));
+                    string savePath = string.Empty;
 
-                    loadedDocument.ImportPage(tempLoadeDocument, 2);
+                    using (FileStream fs = new FileStream(Path.Combine(tempFolder, $"{fileName}.pdf"), FileMode.Open))
+                    {
+                        savePath = Path.Combine(archiveFolder, $"{fileName}.pdf");
 
-                    string savePath = Path.Combine(archiveFolder, $"{fileName}.pdf");
+                        PdfLoadedDocument tempLoadeDocument = new PdfLoadedDocument(fs);
 
-                    loadedDocument.Save(new FileStream(savePath, FileMode.Create));
+                        loadedDocument.ImportPage(tempLoadeDocument, loadedDocument.PageCount - 1);
+                        loadedDocument.Save(new FileStream(savePath, FileMode.Create));
+                        loadedDocument.Close(true);
 
-                    loadedDocument.Close(true);
+                        fs.Close();
+                        fs.Dispose();
+
+                    }
 
                     return $"file successfully saved at: {savePath}";
                 }
@@ -173,9 +197,7 @@ namespace PropertyScraperCSharpConsole.Classes
             }
             catch (Exception ex)
             {
-#if DEBUG
-                Console.WriteLine(ex.Message);
-#endif
+                Console.WriteLine($"Unable to save the file. {ex.Message}");
                 return $"Unable to save the file";
             }
         }

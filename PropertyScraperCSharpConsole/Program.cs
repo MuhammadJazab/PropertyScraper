@@ -32,9 +32,13 @@ namespace PropertyScraperCSharpConsole
 
         static string run;
 
+        static PdfHandler pdfHandler;
+
         static void Main(string[] args)
         {
             tempFolder = Path.GetTempPath();
+
+            pdfHandler = new PdfHandler();
 
             service = ChromeDriverService.CreateDefaultService();
             service.HideCommandPromptWindow = true;
@@ -172,7 +176,7 @@ namespace PropertyScraperCSharpConsole
                             HomeCoUKHtmlString = innerHtml
                         };
 
-                        PdfHandler.SaveRightMovePdf(rightMoveModel);
+                        pdfHandler.SaveRightMovePdf(rightMoveModel);
                     }
                     else NavigationOutput($"Invalid Url: {_item}");
                 }
@@ -242,32 +246,53 @@ namespace PropertyScraperCSharpConsole
             foreach (HtmlNode countryLink in countriesLinkDocument.DocumentNode.SelectNodes("//div[contains(@class,'medium-12') and contains(@class,'columns')]//ul//li//a"))
             {
                 HtmlAttribute rawCountryLink = countryLink.Attributes["href"];
-                string countryUrl = $"{checkMyPostCodeUrl}{rawCountryLink}";
+                string countryUrl = $"{checkMyPostCodeUrl}{rawCountryLink.Value}";
+
+                NavigationOutput($"Navigating to: {countryUrl}");
 
                 HtmlDocument locailitiesInCityDocument = new HtmlWeb().Load(countryUrl);
 
                 foreach (HtmlNode postalCodeInCity in locailitiesInCityDocument.DocumentNode.SelectNodes("//div[@class='threecol']//ul//li//a"))
                 {
                     HtmlAttribute rawPostalCodeInCity = postalCodeInCity.Attributes["href"];
-                    string postalCodeUrl = $"{checkMyPostCodeUrl}{rawPostalCodeInCity}";
+                    string postalCodeUrl = $"{checkMyPostCodeUrl}{rawPostalCodeInCity.Value}";
 
-                    HtmlDocument areaPostalCodeDocument = new HtmlWeb().Load(postalCodeUrl);
+                    NavigationOutput($"Navigating to: {postalCodeUrl}");
 
-                    string checkMyPostHtml = areaPostalCodeDocument.DocumentNode.SelectNodes("//span")[1].InnerHtml;
+                    HtmlDocument postCodesInCityDocument = new HtmlWeb().Load(postalCodeUrl);
 
-                    PdfHandler.SavePDF(checkMyPostHtml, "CheckMyPostCode");
+                    foreach (var postCodesInCity in postCodesInCityDocument.DocumentNode.SelectNodes("//div[contains(@class,'medium-12') and contains(@class,'columns')]//ul//li//a"))
+                    {
+                        HtmlAttribute rawPostCodesInCity = postCodesInCity.Attributes["href"];
+                        string postCodesInCityUrl = $"{checkMyPostCodeUrl}{rawPostCodesInCity.Value}";
+
+                        NavigationOutput($"Navigating to: {postCodesInCityUrl}");
+
+                        HtmlDocument postCodePageDocument = new HtmlWeb().Load(postCodesInCityUrl);
+
+                        NavigationOutput($"Saving file to PDF");
+
+                        string checkMyPostHtml = postCodePageDocument.DocumentNode.SelectNodes("//span")[1].InnerHtml;
+
+                        pdfHandler.SavePDF(checkMyPostHtml, $"CheckMyPostCode {rawPostCodesInCity.Value.Replace("/", "")}");
+                    }
                 }
-            }            
+            }
         }
 
         private static void ScrapQuickSold()
         {
+            NavigationOutput($"Navigating to: {quicksoldUrl}/area-information");
+
             HtmlDocument postalCodeDocument = new HtmlWeb().Load($"{quicksoldUrl}/area-information");
 
             foreach (HtmlNode postalCodes in postalCodeDocument.DocumentNode.SelectNodes("//table[@class='table']//tr//td//a"))
             {
+
                 HtmlAttribute rawPostalCodelink = postalCodes.Attributes["href"];
                 string postalCodeLink = $"{quicksoldUrl}{rawPostalCodelink.Value}";
+
+                NavigationOutput($"Navigating to: {postalCodeLink}");
 
                 HtmlDocument postalAreaDocument = new HtmlWeb().Load(postalCodeLink);
 
@@ -276,6 +301,8 @@ namespace PropertyScraperCSharpConsole
                     HtmlAttribute rawPostalCodeArea = postalCodeAreas.Attributes["href"];
                     string postalCodeAreaLink = $"{quicksoldUrl}{rawPostalCodeArea.Value}";
 
+                    NavigationOutput($"Navigating to: {postalCodeAreaLink}");
+
                     HtmlDocument postalCodeDistrictDocument = new HtmlWeb().Load(postalCodeAreaLink);
 
                     foreach (HtmlNode postalCodeDistrics in postalCodeDistrictDocument.DocumentNode.SelectNodes("//table[@class='table']//tr//td//a"))
@@ -283,13 +310,19 @@ namespace PropertyScraperCSharpConsole
                         HtmlAttribute rawPostalCodeDistrics = postalCodeDistrics.Attributes["href"];
                         string postalCodeDistricsLink = $"{quicksoldUrl}{rawPostalCodeDistrics.Value}";
 
+                        NavigationOutput($"Navigating to: {postalCodeDistricsLink}");
+
                         HtmlDocument areaInformationPageDocument = new HtmlWeb().Load(postalCodeDistricsLink);
 
                         string areaInformationHtml = areaInformationPageDocument
                             .DocumentNode
                             .SelectNodes("//div[@class='row']")[0].InnerHtml;
 
-                        PdfHandler.SavePDF(areaInformationHtml, "QuickSold");
+                        NavigationOutput($"Saving file to PDF");
+
+                        string fileSaved = pdfHandler.SavePDF(areaInformationHtml, "QuickSold");
+
+                        NavigationOutput($"{fileSaved}");
                     }
                 }
             }
