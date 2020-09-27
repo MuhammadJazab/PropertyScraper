@@ -15,6 +15,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="chromedriver.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="QtBinariesDotNetCore\icudt49.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
