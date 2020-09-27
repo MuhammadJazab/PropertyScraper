@@ -21,11 +21,11 @@ namespace PropertyScraperCSharpConsole.Classes
         static HtmlToPdfConverter htmlConverter;
         static WebKitConverterSettings webKitSettings;
 
-        string archiveFolder, qtBinariespath, templatePath, tempFolder;
+        string rightMoveArchiveFolder, quickSoldArchiveFolder, checkMyPostCodeArchiveFolder, qtBinariespath, templatePath, tempFolder;
 
         public PdfHandler()
         {
-            archiveFolder = Path.Combine(Environment.CurrentDirectory, "Archives");
+            rightMoveArchiveFolder = Path.Combine(Environment.CurrentDirectory, "Archives\\RightMove");
             qtBinariespath = Path.Combine(Environment.CurrentDirectory, "QtBinariesDotNetCore");
             templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Resources\\pdftemplate.pdf");
             tempFolder = Path.GetTempPath();
@@ -45,9 +45,9 @@ namespace PropertyScraperCSharpConsole.Classes
             {
                 PdfLoadedDocument loadedDocument = new PdfLoadedDocument(new FileStream(templatePath, FileMode.Open));
 
-                if (!Directory.Exists(archiveFolder))
+                if (!Directory.Exists(rightMoveArchiveFolder))
                 {
-                    Directory.CreateDirectory(archiveFolder);
+                    Directory.CreateDirectory(rightMoveArchiveFolder);
                 }
 
                 if (loadedDocument.PageCount > 0)
@@ -126,7 +126,7 @@ namespace PropertyScraperCSharpConsole.Classes
                         homeCoUKReadStream.Dispose();
                     }
 
-                    string savePath = Path.Combine(archiveFolder, $"{fileName}.pdf");
+                    string savePath = Path.Combine(rightMoveArchiveFolder, $"{fileName}.pdf");
 
                     using (FileStream saveStream = new FileStream(savePath, FileMode.Create))
                     {
@@ -153,12 +153,55 @@ namespace PropertyScraperCSharpConsole.Classes
             }
         }
 
-        public string SavePDF(string htmlString, string fileName)
+        public string SavePDF(string htmlString, string fileName, bool isQuickSold)
         {
             FileStream fs = null;
 
             try
             {
+
+                if (isQuickSold)
+                {
+                    if (!Directory.Exists(quickSoldArchiveFolder))
+                    {
+                        Directory.CreateDirectory(quickSoldArchiveFolder);
+                    }
+
+                    PdfDocument document = htmlConverter.Convert(htmlString, tempFolder);
+
+                    string savePath = string.Empty;
+                    savePath = Path.Combine(quickSoldArchiveFolder, $"{fileName}.pdf");
+
+                    fs = new FileStream(savePath, FileMode.CreateNew);
+
+                    document.Save(fs);
+                    document.Close(true);
+                    fs.Close();
+                    fs.Dispose();
+
+                    return $"file successfully saved at: {savePath}";
+                }
+                else
+                {
+                    if (!Directory.Exists(checkMyPostCodeArchiveFolder))
+                    {
+                        Directory.CreateDirectory(checkMyPostCodeArchiveFolder);
+                    }
+
+                    PdfDocument document = htmlConverter.Convert(htmlString, tempFolder);
+
+                    string savePath = string.Empty;
+                    savePath = Path.Combine(checkMyPostCodeArchiveFolder, $"{fileName}.pdf");
+
+                    fs = new FileStream(savePath, FileMode.CreateNew);
+
+                    document.Save(fs);
+                    document.Close(true);
+                    fs.Close();
+                    fs.Dispose();
+
+                    return $"file successfully saved at: {savePath}";
+                }
 
                 //PdfLoadedDocument loadedDocument;
 
@@ -169,11 +212,6 @@ namespace PropertyScraperCSharpConsole.Classes
                 //else
                 //{
                 //    loadedDocument = new PdfLoadedDocument(new FileStream(templatePath, FileMode.Open));
-                //}
-
-                //if (!Directory.Exists(archiveFolder))
-                //{
-                //    Directory.CreateDirectory(archiveFolder);
                 //}
 
                 //if (loadedDocument.PageCount > 0)
@@ -188,23 +226,23 @@ namespace PropertyScraperCSharpConsole.Classes
 
                 // pdfLoadedPage.Graphics.DrawPdfTemplate(pdfTemplate, SfDrawing.PointF.Empty);
 
-                PdfDocument document = htmlConverter.Convert(htmlString, tempFolder);
+                //PdfDocument document = htmlConverter.Convert(htmlString, tempFolder);
 
-                //fs = new FileStream(Path.Combine(tempFolder, $"{fileName}.pdf"), FileMode.Create);
+                ////fs = new FileStream(Path.Combine(tempFolder, $"{fileName}.pdf"), FileMode.Create);
+                ////document.Save(fs);
+                ////document.Close(true);
+                ////fs.Close();
+                ////fs.Dispose();
+
+                //string savePath = string.Empty;
+                //savePath = Path.Combine(rightMoveArchiveFolder, $"{fileName}.pdf");
+
+                //fs = new FileStream(savePath, FileMode.CreateNew);
+
                 //document.Save(fs);
                 //document.Close(true);
                 //fs.Close();
                 //fs.Dispose();
-
-                string savePath = string.Empty;
-                savePath = Path.Combine(archiveFolder, $"{fileName}.pdf");
-
-                fs = new FileStream(savePath, FileMode.CreateNew);
-
-                document.Save(fs);
-                document.Close(true);
-                fs.Close();
-                fs.Dispose();
 
                 //PdfLoadedDocument tempLoadeDocument = new PdfLoadedDocument(fs);
 
@@ -215,7 +253,7 @@ namespace PropertyScraperCSharpConsole.Classes
                 //fs.Close();
                 //fs.Dispose();
 
-                return $"file successfully saved at: {savePath}";
+                //return $"file successfully saved at: {savePath}";
                 //}
                 //else
                 //{

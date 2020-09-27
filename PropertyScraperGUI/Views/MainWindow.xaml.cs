@@ -9,6 +9,8 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace PropertyScraperGUI
 {
@@ -47,17 +49,23 @@ namespace PropertyScraperGUI
         private void RightMove_Click(object sender, RoutedEventArgs e)
         {
             postalCode = Text_PostalCode.Text;
+            DisableControls();
             ScrapRightMove();
+            EnableControls();
         }
 
         private void QuickSold_Click(object sender, RoutedEventArgs e)
         {
+            DisableControls();
             ScrapQuickSold();
+            EnableControls();
         }
 
         private void CheckMyPostCode_Click(object sender, RoutedEventArgs e)
         {
+            DisableControls();
             ScrapCheckMyPostCode();
+            EnableControls();
         }
 
         private void Quit_Click(object sender, RoutedEventArgs e)
@@ -82,6 +90,8 @@ namespace PropertyScraperGUI
 
                 NavigationOutput($"Navigating to: {driver.Url}");
 
+                MainProgressBar.Value = 2;
+
                 driver.FindElement(By.Id("submit")).Click();
 
                 #region Get property list URLs
@@ -91,22 +101,36 @@ namespace PropertyScraperGUI
 
                 NavigationOutput($"Finding URLs on: {driver.Url}");
 
+                MainProgressBar.Value = 10;
+
                 foreach (var item in readOnlyCollection)
                 {
                     propertiesLinks.Add(item.GetAttribute("href"));
-                    NavigationOutput($"URL found: {item.GetAttribute("href")}");
                 }
+
+                ProgressBar.Value = 90;
 
                 if (propertiesLinks.Count > 0)
                 {
                     NavigationOutput($"Successfully found {propertiesLinks.Count} URLs on: {driver.Url}");
                     driver.Quit();
 
+                    var progresscount = propertiesLinks.Count / 100;
+
+                    MainProgressBar.Value = 15;
+
                     foreach (var _item in propertiesLinks)
                     {
+                        ProgressBar.Value = 0;
+
                         if (!string.IsNullOrEmpty(_item))
                         {
                             NavigationOutput($"Fatching data from: {_item}");
+
+                            ProgressBar.Value += progresscount;
+                            MainProgressBar.Value += progresscount / 2;
+
+                            Text_Outputs.Content = $"Fatching data from: {_item}";
 
                             HtmlDocument htmlDocument = htmlWeb.Load(_item);
 
@@ -152,10 +176,13 @@ namespace PropertyScraperGUI
                                 HomeCoUKHtmlString = innerHtml
                             };
 
-                            pdfHandler.SaveRightMovePdf(rightMoveModel);
+                            Text_Outputs.Content = $"Saving file to pdf";
+                            string rVal = pdfHandler.SaveRightMovePdf(rightMoveModel);
+                            Text_Outputs.Content = rVal;
                         }
                         else NavigationOutput($"Invalid Url: {_item}");
                     }
+                    MainProgressBar.Value = 100;
                 }
                 else NavigationOutput($"No URLs found on: {driver.Url}");
 
@@ -256,7 +283,8 @@ namespace PropertyScraperGUI
 
                         string checkMyPostHtml = postCodePageDocument.DocumentNode.SelectNodes("//span")[1].InnerHtml;
 
-                        Console.WriteLine(pdfHandler.SavePDF(checkMyPostHtml, $"CheckMyPostCode {rawPostCodesInCity.Value.Replace("/", "")}"));
+                        Console.WriteLine(pdfHandler.SavePDF(checkMyPostHtml, 
+                            $"CheckMyPostCode {rawPostCodesInCity.Value.Replace("/", "")}",false));
                     }
                 }
             }
@@ -270,7 +298,6 @@ namespace PropertyScraperGUI
 
             foreach (HtmlNode postalCodes in postalCodeDocument.DocumentNode.SelectNodes("//table[@class='table']//tr//td//a"))
             {
-
                 HtmlAttribute rawPostalCodelink = postalCodes.Attributes["href"];
                 string postalCodeLink = $"{quicksoldUrl}{rawPostalCodelink.Value}";
 
@@ -287,7 +314,9 @@ namespace PropertyScraperGUI
 
                     HtmlDocument postalCodeDistrictDocument = new HtmlWeb().Load(postalCodeAreaLink);
 
-                    foreach (HtmlNode postalCodeDistrics in postalCodeDistrictDocument.DocumentNode.SelectNodes("//table[@class='table']//tr//td//a"))
+                    foreach (HtmlNode postalCodeDistrics in postalCodeDistrictDocument
+                        .DocumentNode
+                        .SelectNodes("//table[@class='table']//tr//td//a"))
                     {
                         HtmlAttribute rawPostalCodeDistrics = postalCodeDistrics.Attributes["href"];
                         string postalCodeDistricsLink = $"{quicksoldUrl}{rawPostalCodeDistrics.Value}";
@@ -302,7 +331,7 @@ namespace PropertyScraperGUI
 
                         NavigationOutput($"Saving file to PDF");
 
-                        string fileSaved = pdfHandler.SavePDF(areaInformationHtml, "QuickSold");
+                        string fileSaved = pdfHandler.SavePDF(areaInformationHtml, "QuickSold", true);
 
                         NavigationOutput($"{fileSaved}");
                     }
@@ -312,7 +341,54 @@ namespace PropertyScraperGUI
 
         public void NavigationOutput(string _url)
         {
-            RichText_Outputs.AppendText($"{_url}" + Environment.NewLine);
+            MainText_Outputs.Content = $"{_url}";
+        }
+
+        public void DisableControls()
+        {
+            foreach (TextBox tb in FindVisualChildren<TextBox>(MainContainer))
+            {
+                tb.IsEnabled = false;
+            }
+
+            foreach (Button btn in FindVisualChildren<Button>(MainContainer))
+            {
+                btn.IsEnabled = false;
+            }
+        }
+
+        public void EnableControls()
+        {
+            foreach (TextBox tb in FindVisualChildren<TextBox>(MainContainer))
+            {
+                tb.IsEnabled = true;
+            }
+
+            foreach (Button btn in FindVisualChildren<Button>(MainContainer))
+            {
+                btn.IsEnabled = true;
+            }
+        }
+
+        public static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
+        {
+            if (depObj != null)
+            {
+                for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
+                {
+                    DependencyObject child = VisualTreeHelper.GetChild(depObj, i);
+
+                    if (child != null && child is T)
+                    {
+                        yield return (T)child;
+                    }
+
+                    foreach (T childOfChild in FindVisualChildren<T>(child))
+                    {
+                        yield return childOfChild;
+                    }
+                }
+            }
         }
     }
 }

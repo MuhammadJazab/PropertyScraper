@@ -6,6 +6,7 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="600" Width="800">
     <Grid
+        x:Name="MainContainer"
         Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="10*"/>
@@ -78,12 +79,6 @@
                 Height="30"
                 VerticalAlignment="Center"
                 Click="CheckMyPostCode_Click"/>
-            <Button
-                Margin="5"
-                Content="Search QuickSold"
-                Height="30"
-                VerticalAlignment="Center"
-                Click="QuickSold_Click"/>
         </StackPanel>
         <StackPanel
             VerticalAlignment="Center"
@@ -97,12 +92,23 @@
                 VerticalAlignment="Center"/>
         </StackPanel>
         <StackPanel
-            VerticalAlignment="Center"
             Grid.Row="2"
-            Grid.Column="1">
-            <RichTextBox 
-                x:Name="RichText_Outputs"
-                VerticalAlignment="Stretch"/>
+            Grid.Column="1"
+            Orientation="Vertical">
+            <Label 
+                Margin="5"
+                x:Name="MainText_Outputs"/>
+            <ProgressBar 
+                x:Name="MainProgressBar"
+                Margin="5"
+                Height="5"/>
+            <Label 
+                Margin="5"
+                x:Name="Text_Outputs"/>
+            <ProgressBar 
+                x:Name="ProgressBar"
+                Margin="5"
+                Height="5"/>
         </StackPanel>
     </Grid>
 </Window>
