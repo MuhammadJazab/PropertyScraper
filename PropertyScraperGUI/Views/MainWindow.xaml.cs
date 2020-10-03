@@ -96,8 +96,14 @@ namespace PropertyScraperGUI
 
                 #region Get property list URLs
 
-                ReadOnlyCollection<IWebElement> readOnlyCollection = driver
-                    .FindElements(By.CssSelector(".propertyCard-moreInfoItem.is-carousel"));
+                ReadOnlyCollection<IWebElement> readOnlyCollection;
+
+                readOnlyCollection = driver.FindElements(By.CssSelector(".propertyCard-moreInfoItem.is-carousel"));
+
+                if (readOnlyCollection.Count <= 0)
+                {
+                    readOnlyCollection = driver.FindElements(By.CssSelector(".propertyCard-link"));
+                }
 
                 NavigationOutput($"Finding URLs on: {driver.Url}");
 
@@ -184,13 +190,17 @@ namespace PropertyScraperGUI
                     }
                     MainProgressBar.Value = 100;
                 }
-                else NavigationOutput($"No URLs found on: {driver.Url}");
-
+                else
+                {
+                    NavigationOutput($"No URLs found on: {driver.Url}");
+                    driver.Quit();
+                }
                 #endregion
             }
             catch (Exception ex)
             {
                 NavigationOutput(ex.Message);
+                driver.Quit();
                 return;
             }
         }
@@ -283,8 +293,8 @@ namespace PropertyScraperGUI
 
                         string checkMyPostHtml = postCodePageDocument.DocumentNode.SelectNodes("//span")[1].InnerHtml;
 
-                        Console.WriteLine(pdfHandler.SavePDF(checkMyPostHtml, 
-                            $"CheckMyPostCode {rawPostCodesInCity.Value.Replace("/", "")}",false));
+                        Console.WriteLine(pdfHandler.SavePDF(checkMyPostHtml,
+                            $"CheckMyPostCode {rawPostCodesInCity.Value.Replace("/", "")}", false));
                     }
                 }
             }
