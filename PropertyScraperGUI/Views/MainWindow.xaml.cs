@@ -48,7 +48,7 @@ namespace PropertyScraperGUI
 
         private void RightMove_Click(object sender, RoutedEventArgs e)
         {
-            postalCode = string.IsNullOrEmpty(Text_PostalCode.Text) ? Text_PostalCode.Text : defaultPostalCode;
+            postalCode = !string.IsNullOrEmpty(Text_PostalCode.Text) ? Text_PostalCode.Text : defaultPostalCode;
             DisableControls();
             ScrapRightMove();
             EnableControls();
