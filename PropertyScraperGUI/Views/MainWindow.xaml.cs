@@ -48,7 +48,7 @@ namespace PropertyScraperGUI
 
         private void RightMove_Click(object sender, RoutedEventArgs e)
         {
-            postalCode = Text_PostalCode.Text;
+            postalCode = string.IsNullOrEmpty(Text_PostalCode.Text) ? Text_PostalCode.Text : defaultPostalCode;
             DisableControls();
             ScrapRightMove();
             EnableControls();
@@ -85,7 +85,7 @@ namespace PropertyScraperGUI
                 driver.Url = rightMoveUrl;
 
                 driver.FindElement(By.Name("searchLocation"))
-                    .SendKeys(string.IsNullOrEmpty(postalCode) ? defaultPostalCode : postalCode);
+                    .SendKeys(postalCode);
                 driver.FindElement(By.Id("buy")).Click();
 
                 NavigationOutput($"Navigating to: {driver.Url}");
@@ -178,7 +178,7 @@ namespace PropertyScraperGUI
                                 PropertyType = propertyType,
                                 PropertyUrl = _item,
                                 PropertyHeatHtmlString = propertyHeatHtmlString,
-                                postalCode = string.IsNullOrEmpty(postalCode) ? defaultPostalCode : postalCode,
+                                postalCode = postalCode,
                                 HomeCoUKHtmlString = innerHtml
                             };
 
@@ -207,9 +207,7 @@ namespace PropertyScraperGUI
 
         public string ScrapPropertyHeat()
         {
-            var _postalCode = string.IsNullOrEmpty(postalCode) ? defaultPostalCode : postalCode;
-
-            string url = $"{propertyHeatmapUrl}/reports/{_postalCode}";
+            string url = $"{propertyHeatmapUrl}/reports/{postalCode}";
 
             HtmlDocument htmlDocument = htmlWeb.Load(url);
 
@@ -220,40 +218,24 @@ namespace PropertyScraperGUI
 
         public string ScrapHomeCoUk()
         {
+            string tempPostalCode, url, innerHtml;
+
             driver = new ChromeDriver(service);
             htmlWeb = new HtmlWeb();
 
-            string tempPostalCode = string.IsNullOrEmpty(postalCode) ? defaultPostalCode : postalCode;
-            string url = $"https://www.home.co.uk/for_rent/{tempPostalCode}/current_rents?location={tempPostalCode}";
+            tempPostalCode = postalCode.Contains(" ") ? postalCode.Split(" ")[0] : defaultPostalCode;
+
+            url = $"https://www.home.co.uk/for_rent/{tempPostalCode}/current_rents?location={tempPostalCode}";
 
             NavigationOutput($"Navigating to: {url}");
 
             driver.Url = url;
 
-            string innerHtml = driver.FindElement(By.CssSelector(".homeco_content_main.homeco_content_min_height")).GetAttribute("innerHTML");
+            innerHtml = driver.FindElement(By.CssSelector(".homeco_content_main.homeco_content_min_height")).GetAttribute("innerHTML");
 
             driver.Quit();
 
             return innerHtml;
-
-            //driver.FindElement(By.CssSelector(".homeco_pr_textbox.input--medium.ui-autocomplete-input"))
-            //    .SendKeys(string.IsNullOrEmpty(postalCode) ? defaultPostalCode : postalCode);
-
-            //driver.FindElement(By.CssSelector(".homeco_pr_button.button")).Click();
-
-            //NavigationOutput($"Navigating to: {driver.Url}");
-
-            //driver.FindElement(By.XPath("//input[@value='Search']")).Click();
-
-            //ReadOnlyCollection<IWebElement> readOnlyCollection = driver.FindElements(By.ClassName("homeco_prop_link"));
-
-            //NavigationOutput($"Finding URLs on: {driver.Url}");
-
-            //foreach (var item in readOnlyCollection)
-            //{
-            //    //propertiesLinks.Add(item.GetAttribute("href"));
-            //    NavigationOutput($"URL found: {item.GetAttribute("href")}");
-            //}
         }
 
         public void ScrapCheckMyPostCode()
