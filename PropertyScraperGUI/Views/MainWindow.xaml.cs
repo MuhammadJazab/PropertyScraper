@@ -6,6 +6,7 @@ using PropertyScraperCSharpConsole.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -77,6 +78,8 @@ namespace PropertyScraperGUI
         {
             try
             {
+                string rVal = string.Empty;
+
                 driver = new ChromeDriver(service);
                 htmlWeb = new HtmlWeb();
 
@@ -183,12 +186,15 @@ namespace PropertyScraperGUI
                             };
 
                             Text_Outputs.Content = $"Saving file to pdf";
-                            string rVal = pdfHandler.SaveRightMovePdf(rightMoveModel);
+                            rVal = pdfHandler.SaveRightMovePdf(rightMoveModel);
                             Text_Outputs.Content = rVal;
                         }
                         else NavigationOutput($"Invalid Url: {_item}");
                     }
+
                     MainProgressBar.Value = 100;
+                    ProgressBar.Value = 100;
+                    
                 }
                 else
                 {
@@ -240,6 +246,8 @@ namespace PropertyScraperGUI
 
         public void ScrapCheckMyPostCode()
         {
+            string fileSaved = string.Empty;
+
             NavigationOutput($"Navigating to: {checkMyPostCodeUrl}");
 
             HtmlDocument countriesLinkDocument = new HtmlWeb().Load($"{checkMyPostCodeUrl}/counties");
@@ -275,15 +283,18 @@ namespace PropertyScraperGUI
 
                         string checkMyPostHtml = postCodePageDocument.DocumentNode.SelectNodes("//span")[1].InnerHtml;
 
-                        Console.WriteLine(pdfHandler.SavePDF(checkMyPostHtml,
-                            $"CheckMyPostCode {rawPostCodesInCity.Value.Replace("/", "")}", false));
+                        fileSaved = pdfHandler.SavePDF(checkMyPostHtml, $"CheckMyPostCode {rawPostCodesInCity.Value.Replace("/", "")}", false);
                     }
                 }
             }
+            MainProgressBar.Value = 100;
+            ProgressBar.Value = 100;
         }
 
         public void ScrapQuickSold()
         {
+            string fileSaved = string.Empty;
+
             NavigationOutput($"Navigating to: {quicksoldUrl}/area-information");
 
             HtmlDocument postalCodeDocument = new HtmlWeb().Load($"{quicksoldUrl}/area-information");
@@ -323,12 +334,15 @@ namespace PropertyScraperGUI
 
                         NavigationOutput($"Saving file to PDF");
 
-                        string fileSaved = pdfHandler.SavePDF(areaInformationHtml, "QuickSold", true);
+                        fileSaved = pdfHandler.SavePDF(areaInformationHtml, "QuickSold", true);
 
                         NavigationOutput($"{fileSaved}");
                     }
                 }
             }
+
+            MainProgressBar.Value = 100;
+            ProgressBar.Value = 100;
         }
 
         public void NavigationOutput(string _url)
@@ -360,6 +374,10 @@ namespace PropertyScraperGUI
             {
                 btn.IsEnabled = true;
             }
+
+            NavigationOutput($"All data fetch successfully");
+            ProgressBar.Value = 100;
+            MainProgressBar.Value = 100;
         }
 
         public static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject

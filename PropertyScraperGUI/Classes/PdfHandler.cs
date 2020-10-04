@@ -137,7 +137,7 @@ namespace PropertyScraperCSharpConsole.Classes
                         saveStream.Dispose();
                     }
 
-                    return $"file successfully saved at: {savePath}";
+                    return $"{savePath}";
                 }
                 else
                 {
@@ -200,7 +200,7 @@ namespace PropertyScraperCSharpConsole.Classes
                     fs.Close();
                     fs.Dispose();
 
-                    return $"file successfully saved at: {savePath}";
+                    return $"{savePath}";
                 }
 
                 //PdfLoadedDocument loadedDocument;
